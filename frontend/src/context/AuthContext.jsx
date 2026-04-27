@@ -1,5 +1,5 @@
 import React, { createContext, useState, useCallback, useEffect } from 'react';
-import { supabase } from '../services/supabase';
+import { apiClient } from '../services/api';
 
 export const AuthContext = createContext();
 
@@ -10,17 +10,19 @@ export const AuthProvider = ({ children }) => {
 
   // Check if user is logged in on mount
   useEffect(() => {
-    const getSession = async () => {
+    const restoreSession = () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        const token = localStorage.getItem('token');
+        const storedUser = localStorage.getItem('user');
 
-        if (error) {
-          console.error('Error getting session:', error);
-        } else if (session?.user) {
-          console.log('Session restored for user:', session.user.email);
-          setUser(session.user);
+        console.log('Restoring session:', { hasToken: !!token, hasUser: !!storedUser });
+
+        if (token && storedUser) {
+          const user = JSON.parse(storedUser);
+          console.log('Session restored for user:', user.email);
+          setUser(user);
         } else {
-          console.log('No active session found');
+          console.log('No session found in localStorage');
         }
       } catch (error) {
         console.error('Error restoring session:', error);
@@ -29,23 +31,7 @@ export const AuthProvider = ({ children }) => {
       }
     };
 
-    getSession();
-
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email);
-
-        if (session?.user) {
-          setUser(session.user);
-        } else {
-          setUser(null);
-        }
-        setLoading(false);
-      }
-    );
-
-    return () => subscription.unsubscribe();
+    restoreSession();
   }, []);
 
   const login = useCallback(async (email, password) => {
@@ -53,20 +39,20 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       setLoading(true);
 
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const response = await apiClient.post('/auth/login', { email, password });
 
-      if (error) {
-        setError(error.message);
-        throw error;
+      if (response.data.success) {
+        const { token, user } = response.data;
+
+        // Store token and user in localStorage
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(user));
+
+        setUser(user);
+        return response.data;
       }
-
-      console.log('Login successful:', data.user?.email);
-      return data;
     } catch (err) {
-      const errorMessage = err.message || 'Login failed';
+      const errorMessage = err.response?.data?.message || err.message || 'Login failed';
       setError(errorMessage);
       throw err;
     } finally {
@@ -79,25 +65,20 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       setLoading(true);
 
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name: name,
-          }
-        }
-      });
+      const response = await apiClient.post('/auth/register', { name, email, password });
 
-      if (error) {
-        setError(error.message);
-        throw error;
+      if (response.data.success) {
+        const { token, user } = response.data;
+
+        // Store token and user in localStorage
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(user));
+
+        setUser(user);
+        return response.data;
       }
-
-      console.log('Registration successful:', data.user?.email);
-      return data;
     } catch (err) {
-      const errorMessage = err.message || 'Registration failed';
+      const errorMessage = err.response?.data?.message || err.message || 'Registration failed';
       setError(errorMessage);
       throw err;
     } finally {
@@ -105,18 +86,9 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const logout = useCallback(async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error('Error logging out:', error);
-      } else {
-        console.log('Logout successful');
-      }
-    } catch (error) {
-      console.error('Error during logout:', error);
-    }
-
+  const logout = useCallback(() => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setUser(null);
     setError(null);
   }, []);

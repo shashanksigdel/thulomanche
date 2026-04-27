@@ -1,20 +1,34 @@
-import { supabase } from './supabase.js';
+import axios from 'axios';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
+
+export const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
+// Add JWT token interceptor
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 // Posts Service
 export const postsService = {
   getAllPosts: async () => {
     try {
-      const { data, error } = await supabase
-        .from('posts')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching posts:', error);
-        return [];
-      }
-
-      return data || [];
+      const response = await apiClient.get('/posts');
+      return response.data.posts || [];
     } catch (error) {
       console.error('Error fetching posts:', error);
       return [];
@@ -23,101 +37,30 @@ export const postsService = {
 
   getPostBySlug: async (slug) => {
     try {
-      const { data, error } = await supabase
-        .from('posts')
-        .select('*')
-        .eq('slug', slug)
-        .single();
-
-      if (error) {
-        console.error('Error fetching post:', error);
-        return null;
-      }
-
-      return data;
+      const response = await apiClient.get(`/posts/${slug}`);
+      return response.data.post;
     } catch (error) {
       console.error('Error fetching post:', error);
       return null;
     }
   },
 
-  createPost: async (data) => {
-    const { data: result, error } = await supabase
-      .from('posts')
-      .insert([data])
-      .select()
-      .single();
+  createPost: (data) =>
+    apiClient.post('/posts', data),
 
-    if (error) throw error;
-    return result;
-  },
+  updatePost: (id, data) =>
+    apiClient.put(`/posts/${id}`, data),
 
-  updatePost: async (id, data) => {
-    const { data: result, error } = await supabase
-      .from('posts')
-      .update(data)
-      .eq('id', id)
-      .select()
-      .single();
-
-    if (error) throw error;
-    return result;
-  },
-
-  deletePost: async (id) => {
-    const { error } = await supabase
-      .from('posts')
-      .delete()
-      .eq('id', id);
-
-    if (error) throw error;
-  }
+  deletePost: (id) =>
+    apiClient.delete(`/posts/${id}`)
 };
 
 // Stats Service
 export const statsService = {
   getStats: async () => {
     try {
-      // Get total posts count
-      const { count: totalPosts, error: postsError } = await supabase
-        .from('posts')
-        .select('*', { count: 'exact', head: true });
-
-      if (postsError) {
-        console.error('Error fetching posts count:', postsError);
-      }
-
-      // Get total views (sum of view_count)
-      const { data: postsData, error: viewsError } = await supabase
-        .from('posts')
-        .select('view_count');
-
-      let totalViews = 0;
-      if (!viewsError && postsData) {
-        totalViews = postsData.reduce((sum, post) => sum + (post.view_count || 0), 0);
-      }
-
-      // Get unique categories count
-      const { data: categoriesData, error: categoriesError } = await supabase
-        .from('posts')
-        .select('categories');
-
-      let totalCategories = 0;
-      if (!categoriesError && categoriesData) {
-        const uniqueCategories = new Set();
-        categoriesData.forEach(post => {
-          if (post.categories && Array.isArray(post.categories)) {
-            post.categories.forEach(cat => uniqueCategories.add(cat));
-          }
-        });
-        totalCategories = uniqueCategories.size;
-      }
-
-      return {
-        totalPosts: totalPosts || 0,
-        totalViews: totalViews || 0,
-        totalCategories: totalCategories || 0
-      };
+      const response = await apiClient.get('/stats');
+      return response.data || { totalPosts: 0, totalViews: 0, totalCategories: 0 };
     } catch (error) {
       console.error('Error fetching stats:', error);
       return { totalPosts: 0, totalViews: 0, totalCategories: 0 };
@@ -129,116 +72,63 @@ export const statsService = {
 export const commentsService = {
   getCommentsByPost: async (postId) => {
     try {
-      const { data, error } = await supabase
-        .from('comments')
-        .select('*')
-        .eq('post_id', postId)
-        .order('created_at', { ascending: true });
-
-      if (error) {
-        console.error('Error fetching comments:', error);
-        return [];
-      }
-
-      return data || [];
+      const response = await apiClient.get(`/posts/${postId}/comments`);
+      return response.data.comments || [];
     } catch (error) {
       console.error('Error fetching comments:', error);
       return [];
     }
   },
 
-  createComment: async (postId, data) => {
-    const { data: result, error } = await supabase
-      .from('comments')
-      .insert([{
-        ...data,
-        post_id: postId
-      }])
-      .select()
-      .single();
+  createComment: (postId, data) =>
+    apiClient.post(`/posts/${postId}/comments`, data),
 
-    if (error) throw error;
-    return result;
-  },
-
-  deleteComment: async (commentId) => {
-    const { error } = await supabase
-      .from('comments')
-      .delete()
-      .eq('id', commentId);
-
-    if (error) throw error;
-  }
+  deleteComment: (commentId) =>
+    apiClient.delete(`/comments/${commentId}`)
 };
 
 // Settings Service
 export const settingsService = {
   getSettings: async () => {
     try {
-      console.log('Fetching settings from Supabase');
-      const { data, error } = await supabase
-        .from('settings')
-        .select('*')
-        .single();
+      console.log('Fetching settings from /api/settings');
+      const response = await apiClient.get('/settings');
+      console.log('Settings response:', response.data);
+      console.log('Settings response type:', typeof response.data);
+      console.log('Settings response keys:', Object.keys(response.data));
 
-      if (error) {
-        console.log('Settings not found, using defaults:', error);
-        return {
-          siteName: 'Thulomanche',
-          siteTagline: 'A space for ideas, stories, and perspectives on life, technology, and creativity.'
-        };
+      // Backend returns {success: true, settings: {...}}
+      if (response.data && response.data.settings && typeof response.data.settings === 'object') {
+        console.log('Extracted settings:', response.data.settings);
+        return response.data.settings;
       }
 
-      console.log('Settings found:', data);
-      return data || {};
+      console.log('No settings found in expected format');
+      return {};
     } catch (error) {
       console.error('Error fetching settings:', error);
-      return {
-        siteName: 'Thulomanche',
-        siteTagline: 'A space for ideas, stories, and perspectives on life, technology, and creativity.'
-      };
+      return {};
     }
   },
 
   updateSettings: async (data) => {
     try {
-      console.log('Updating settings in Supabase:', data);
+      console.log('Sending settings to /api/settings:', data);
+      const response = await apiClient.put('/settings', data);
+      console.log('Backend response:', response.data);
 
-      // First check if settings exist
-      const { data: existingSettings, error: selectError } = await supabase
-        .from('settings')
-        .select('*')
-        .single();
-
-      let result;
-      if (selectError && selectError.code === 'PGRST116') {
-        // Settings don't exist, insert new
-        const { data: insertResult, error: insertError } = await supabase
-          .from('settings')
-          .insert([data])
-          .select()
-          .single();
-
-        if (insertError) throw insertError;
-        result = insertResult;
-      } else {
-        // Settings exist, update
-        const { data: updateResult, error: updateError } = await supabase
-          .from('settings')
-          .update(data)
-          .eq('id', existingSettings.id)
-          .select()
-          .single();
-
-        if (updateError) throw updateError;
-        result = updateResult;
+      // Extract settings from response
+      if (response.data && response.data.settings) {
+        return response.data.settings;
       }
-
-      console.log('Settings updated successfully:', result);
-      return result;
+      return response.data;
     } catch (error) {
       console.error('Settings update failed:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Error status:', error.response?.status);
       throw error;
     }
   }
 };
+
+export default apiClient;
