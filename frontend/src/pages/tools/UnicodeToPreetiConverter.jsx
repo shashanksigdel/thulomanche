@@ -97,6 +97,13 @@ function convertUnicodeToPreeti(inputText) {
     const n2 = ch[i + 2];
     const n3 = ch[i + 3];
 
+    // ====== ZWJ-based र्‍ → ¥ (must come BEFORE the regular र + ् handler) ======
+    if (c === 'र' && n1 === '्' && ch[i + 2] === '\u200D') {
+      out += '¥';
+      i += 3;
+      continue;
+    }
+
     if (n1 === 'ि') {
       if (c === 'q') {
         out += 'l' + c;
@@ -108,7 +115,7 @@ function convertUnicodeToPreeti(inputText) {
       continue;
     }
 
-    // ि two ahead after halant consonant: e.g. त्ति (uppercase halant + consonant + ि)
+    // ि two ahead after halant consonant
     if (n2 === 'ि' && 'WERTYUXASDGHJK:ZVN'.includes(c)) {
       if (n1 !== 'q') {
         const pv = UNICODE_TO_PREETI[n1];
@@ -120,7 +127,7 @@ function convertUnicodeToPreeti(inputText) {
       continue;
     }
 
-    // ि two ahead after | or « marker: e.g. क्रि → s|ि → ls|
+    // ि two ahead after | or « marker
     if ((n1 === '|' || n1 === '«') && n2 === 'ि') {
       const pv = UNICODE_TO_PREETI[c];
       out += 'l' + (pv !== undefined ? pv : c) + n1;
@@ -161,6 +168,7 @@ function convertUnicodeToPreeti(inputText) {
 
   out = out.replace(/Si/g,    'I');
   out = out.replace(/H`/g,    '1');
+  out = out.replace(/b\\lw/g, 'l4');
   out = out.replace(/b\\w/g,  '4');
   out = out.replace(/z\|/g,   '>');
   out = out.replace(/\/'/g,   '?');
@@ -191,12 +199,7 @@ export const UnicodeToPreetiConverter = () => {
   };
 
   const handleLoadSample = () => {
-    const sample = `इन्धनको मूल्य बढेसँगै यातायात व्यवस्था विभागले पुनः सार्वजनिक यातायातको भाडा वृद्धि गरेको छ।
-विभागका अनुसार अन्तरप्रदेश सञ्चालन हुने सवारीसाधनमा लागु हुने गरी आज बुधबारदेखि नयाँ भाडादर कार्यान्वयनमा आएको छ।
-विभागले अन्तरप्रदेश यात्रुवाहक सवारी, पहाडी मार्गमा र तथा तराई क्षेत्रमा सञ्चालन हुने मालवाहक सवारीमा समान रूपमा ५–५ प्रतिशतले भाडा बढाएको उल्लेख गरेको छ।
-यसअघि चैत २५ गते पनि भाडा समायोजन गरिएको थियो।
-भौतिक पूर्वाधार तथा यातायात मन्त्रालयले भाडा वृद्धिका लागि १२ वैशाखमा सहमति दिएको थियो। 
-विद्युतीय सवारीसाधनमा भने भाडा वृद्धि गर्न नपाइने र यस्तो गरिएमा कारबाही गरिने चेतावनी पनि दिइएको छ।`;
+    const sample = `श्रीमान् प्रकाशले क्षत्रिय वंशको इतिहास अध्ययन गर्दै थिए। त्यस्तै ज्ञानेन्द्रले ट्रकमा ट्र्याक राख्दै गर्दा ड्राइभरले ब्रेक थिच्यो। स्त्रीहरूले स्वास्थ्य क्षेत्रमा क्रान्तिकारी परिवर्तन ल्याएका छन्। द्वन्द्वात्मक प्रश्नहरूको उत्तर दिन प्रज्ञा प्रतिष्ठानका विद्वान्हरू एकत्रित भए। राष्ट्रिय प्रज्ञा–प्रतिष्ठानले संस्कृत ग्रन्थहरूको अनुवाद गर्ने कार्यक्रम घोषणा गर्‍यो। त्रिभुवन विश्वविद्यालयका प्राध्यापकहरूले पाठ्यक्रम संशोधन गर्न माग राखे। कृष्णप्रसादले ह्वीलचेयरमा बसेर स्नातकोत्तर थेसिस लेखिरहेका थिए।`;
     setUnicodeText(sample);
     setPreetiText(convertUnicodeToPreeti(sample));
   };
