@@ -7,44 +7,84 @@ export const UnicodeToPreetiConverter = () => {
   const [preetiText, setPreetiText] = useState('');
   const [copied, setCopied] = useState(false);
 
-  // Unicode to Preeti conversion mapping
+  // Correct mappings from the proper Preeti engine
   const CONSONANTS = {
-    'क':'s','ख':'v','ग':'u','घ':'3','ङ':'ª',
-    'च':'r','छ':'5','ज':'h','झ':'em','ञ':'~',
-    'ट':'6','ठ':'7','ड':'8','ढ':'9','ण':';',
-    'त':'t','थ':'y','द':'b','ध':'w','न':'g',
-    'प':'k','फ':'km','ब':'a','भ':'e','म':'d',
-    'य':'o','र':'/','ल':'n','व':'j','श':'z',
-    'ष':'if','स':'s','ह':'x',
+    'क': 'k',
+    'ख': 'v',
+    'ग': 'u',
+    'घ': 'Ô',
+    'ङ': 'ª',
+    'च': 'r',
+    'छ': 'R',
+    'ज': 'h',
+    'झ': 'em',
+    'ञ': '~',
+    'ट': '{',
+    'ठ': '}',
+    'ड': 'M',
+    'ढ': 'N',
+    'ण': 'K',
+    'त': 't',
+    'थ': 'y',
+    'द': 'b',
+    'ध': 'w',
+    'न': 'g',
+    'प': 'k',
+    'फ': 'km',
+    'ब': 'a',
+    'भ': 'e',
+    'म': 'd',
+    'य': 'o',
+    'र': 'r',
+    'ल': 'n',
+    'व': 'j',
+    'श': 'z',
+    'ष': 'if',
+    'स': 's',
+    'ह': 'x',
   };
 
   const VOWELS = {
-    'अ':'c','आ':'cfv','इ':'bf','ई':'wf',
-    'उ':'@','ऊ':'Ö','ए':'P','ऐ':'Psf',
-    'ओ':'cf]','औ':'cfp','ऋ':'¿',
+    'अ': 'c',
+    'आ': 'cf',
+    'इ': 'b',
+    'ई': 'O',
+    'उ': 'pf',
+    'ऊ': 'Q',
+    'ए': 'P',
+    'ऐ': 'P',
+    'ओ': 'cf]',
+    'औ': 'cfO',
+    'ऋ': '_',
+    'ॠ': '_',
+    'अं': 'c+',
+    'अः': 'cM',
   };
 
   const VOWEL_MARKS = {
-    'ा':'f',
-    'ि':'i',
-    'ी':'L',
-    'ु':'@',
-    'ू':'Ö',
-    'े':']',
-    'ै':'s',
-    'ो':'f]',
-    'ौ':'fp',
-    'ृ':'[',
+    'ा': 'f',
+    'ि': 'f',
+    'ी': 'L',
+    'ु': 'M',
+    'ू': 'N',
+    'े': 'e',
+    'ै': 'O',
+    'ो': 'f]',
+    'ौ': 'fO',
+    'ृ': '[',
+    'ॅ': 'y',
   };
 
   const SPECIALS = {
-    'ं':'',
-    'ः':',',
-    'ँ':'F',
-    '्':'-',
-    'ऽ':'&',
-    '।':'.',
-    '॥':'..',
+    'ं': '+',
+    'ः': 'M',
+    'ँ': 'F',
+    '्': '',
+    'ऽ': '&',
+    '।': '.',
+    '॥': '..',
+    '\u200c': '',
+    '\u200d': '',
   };
 
   const DIGITS = {
@@ -67,7 +107,7 @@ export const UnicodeToPreetiConverter = () => {
       if (c === '\u200d' || c === '\u200c') { i++; continue; }
 
       if (DIGITS[c] !== undefined) { result += DIGITS[c]; i++; continue; }
-      if (SPECIALS[c] !== undefined) { result += SPECIALS[c]; i++; continue; }
+      if (SPECIALS[c] !== undefined && c !== '्') { result += SPECIALS[c]; i++; continue; }
       if (VOWELS[c] !== undefined) { result += VOWELS[c]; i++; continue; }
       if (c.charCodeAt(0) < 128) { result += c; i++; continue; }
 
@@ -110,7 +150,13 @@ export const UnicodeToPreetiConverter = () => {
   };
 
   const handleLoadSample = () => {
-    const sample = 'नमस्ते\nमेरो नाम राम हो।\nकाठमाडौं नेपालको राजधानी हो।';
+    const sample =
+      'नमस्ते\n' +
+      'मेरो नाम राम हो।\n' +
+      'काठमाडौं नेपालको राजधानी हो।\n' +
+      'नेपाल एक सुन्दर देश हो।\n' +
+      'हिमालय विश्वकै उच्च पर्वत हो।\n' +
+      'राष्ट्रिय झण्डा रातो, नीलो र सेतो रङको छ।';
     setUnicodeText(sample);
     setPreetiText(convertUnicodeToPreeti(sample));
   };
@@ -135,7 +181,7 @@ export const UnicodeToPreetiConverter = () => {
             <textarea
               value={unicodeText}
               onChange={(e) => setUnicodeText(e.target.value)}
-              placeholder="यहाँ नेपाली टाइप गर्नुहोस् वा टाँस्नुहोस्…"
+              placeholder="यहाँ युनिकोड नेपाली टाइप गर्नुहोस् वा टाँस्नुहोस्…&#10;&#10;उदाहरण: नमस्ते नेपाल"
               className="panel-textarea"
             />
             <div className="panel-foot">
