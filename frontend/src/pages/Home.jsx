@@ -1,19 +1,26 @@
 import React, { useState } from 'react';
 import { ProfileHeader } from '../components/ProfileHeader';
 import { PostsList } from '../components/PostsList';
+import { UnicodeToPreetiConverter } from './tools/UnicodeToPreetiConverter';
 
 export const Home = () => {
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedTool, setSelectedTool] = useState(null);
+
+  const handleToolSelect = (tool) => {
+    setSelectedTool(tool === selectedTool ? null : tool);
+  };
 
   return (
     <div>
-      <ProfileHeader 
-        selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
-      />
-      <div style={{ paddingBottom: 48 }}>
-        <PostsList selectedCategory={selectedCategory} />
-      </div>
+      <ProfileHeader onToolSelect={handleToolSelect} />
+      
+      {selectedTool === 'unicode-to-preeti' && <UnicodeToPreetiConverter />}
+
+      {!selectedTool && (
+        <div style={{ paddingBottom: 48 }}>
+          <PostsList />
+        </div>
+      )}
     </div>
   );
 };

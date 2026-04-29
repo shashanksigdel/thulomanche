@@ -1,7 +1,6 @@
 /* Profile Header */
 .profile-header {
   background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-  border-bottom: 1px solid #e2e8f0;
   margin-bottom: 40px;
 }
 
@@ -219,6 +218,44 @@
   background-color: rgba(8, 145, 178, 0.08);
 }
 
+/* Tools Tabs */
+.tools-tabs {
+  display: flex;
+  gap: 12px;
+  border-bottom: 2px solid #e2e8f0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 32px 0 0 0;
+  padding-bottom: 0;
+}
+
+.tool-tab {
+  padding: 14px 16px;
+  border: none;
+  background-color: transparent;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.tool-tab:hover {
+  color: #0891b2;
+  background-color: rgba(8, 145, 178, 0.05);
+}
+
+.tool-tab.active {
+  color: #0891b2;
+  border-bottom-color: #0891b2;
+  font-weight: 700;
+  background-color: rgba(8, 145, 178, 0.08);
+}
+
 /* Responsive */
 @media (min-width: 640px) {
   .profile-banner {
@@ -341,7 +378,30 @@
     font-size: 15px;
   }
 
+  .tool-tab {
+    padding: 16px 24px;
+    font-size: 15px;
+  }
+
   .profile-info-section {
     padding-bottom: 0;
+  }
+}
+
+.tools-content {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>YTrimmer</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #0e0e10;
+    --surface: #18181b;
+    --surface2: #27272a;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #fafafa;
+    --muted: #a1a1aa;
+    --accent: #e63946;
+    --accent2: #ff6b6b;
+    --blue: #3b82f6;
+    --green: #22c55e;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  .app { max-width: 760px; margin: 0 auto; padding: 48px 24px 80px; }
+
+  .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 40px; }
+  .logo-icon { width: 36px; height: 36px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+  .logo-icon svg { width: 18px; height: 18px; fill: #fff; }
+  .logo-text { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; }
+  .logo-text span { color: var(--accent); }
+
+  .url-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
+  .url-row { display: flex; gap: 10px; }
+  .url-input { flex: 1; background: var(--bg); border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 12px 16px; font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text); outline: none; transition: border-color 0.15s; }
+  .url-input::placeholder { color: var(--muted); }
+  .url-input:focus { border-color: var(--accent); }
+  .load-btn { background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); padding: 12px 22px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: opacity 0.15s, transform 0.1s; }
+  .load-btn:hover { opacity: 0.88; }
+  .load-btn:active { transform: scale(0.97); }
+  .load-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .err-msg { font-size: 13px; color: #f87171; margin-top: 10px; display: none; }
+
+  .preview { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 16px; display: none; }
+  .thumb-wrap { position: relative; aspect-ratio: 16/9; background: #000; overflow: hidden; }
+  .thumb-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .thumb-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 50%); }
+  .thumb-meta { position: absolute; bottom: 14px; left: 16px; right: 16px; }
+  .thumb-title { font-size: 16px; font-weight: 600; line-height: 1.35; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,0.5); margin-bottom: 4px; }
+  .thumb-sub { font-size: 12px; color: rgba(255,255,255,0.75); }
+  .dur-pill { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.82); color: #fff; font-family: 'DM Mono', monospace; font-size: 12px; padding: 3px 9px; border-radius: 5px; }
+
+  .trim-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; margin-bottom: 16px; display: none; }
+  .card-title { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+
+  .timeline { position: relative; height: 56px; background: var(--bg); border-radius: 8px; border: 1px solid var(--border2); overflow: hidden; cursor: pointer; user-select: none; margin-bottom: 16px; }
+  .tl-bg { position: absolute; inset: 0; background: repeating-linear-gradient(90deg, transparent, transparent 48px, rgba(255,255,255,0.03) 48px, rgba(255,255,255,0.03) 49px); }
+  .tl-selection { position: absolute; top: 0; bottom: 0; background: rgba(59,130,246,0.15); border-left: 2px solid var(--blue); border-right: 2px solid var(--blue); pointer-events: none; }
+  .tl-handle { position: absolute; top: 0; bottom: 0; width: 20px; display: flex; align-items: center; justify-content: center; cursor: ew-resize; z-index: 4; transform: translateX(-50%); }
+  .tl-handle-bar { width: 4px; height: 30px; background: var(--blue); border-radius: 3px; }
+  .tl-label { position: absolute; bottom: 5px; font-family: 'DM Mono', monospace; font-size: 10px; color: rgba(255,255,255,0.45); pointer-events: none; }
+
+  .time-row { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 16px; }
+  .time-group { flex: 1; }
+  .time-group label { font-size: 11px; color: var(--muted); display: block; margin-bottom: 5px; font-weight: 500; }
+  .time-input { width: 100%; background: var(--bg); border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 10px 12px; font-family: 'DM Mono', monospace; font-size: 14px; color: var(--text); outline: none; text-align: center; transition: border-color 0.15s; }
+  .time-input:focus { border-color: var(--blue); }
+  .time-arrow { color: var(--muted); font-size: 14px; padding-bottom: 10px; }
+  .sel-dur { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+  .sel-dur strong { color: var(--text); font-weight: 500; }
+
+  .quality-label { font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+  .quality-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; }
+  .q-btn { font-size: 12px; font-weight: 500; padding: 6px 14px; border: 1px solid var(--border2); border-radius: 6px; background: var(--bg); color: var(--muted); cursor: pointer; transition: all 0.12s; font-family: 'DM Sans', sans-serif; }
+  .q-btn:hover { border-color: var(--blue); color: var(--text); }
+  .q-btn.active { background: rgba(59,130,246,0.15); border-color: var(--blue); color: var(--blue); }
+
+  .dl-btn { width: 100%; background: var(--accent); color: #fff; border: none; border-radius: var(--radius-sm); padding: 14px; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; transition: opacity 0.15s, transform 0.1s; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .dl-btn:hover { opacity: 0.88; }
+  .dl-btn:active { transform: scale(0.98); }
+  .dl-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .progress-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; margin-bottom: 16px; display: none; }
+  .progress-label { font-size: 14px; font-weight: 500; margin-bottom: 12px; }
+  .progress-bar-wrap { height: 6px; background: var(--bg); border-radius: 99px; overflow: hidden; margin-bottom: 8px; }
+  .progress-bar { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.3s; width: 0%; }
+  .progress-pct { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); }
+  .progress-done { color: var(--green); font-size: 14px; font-weight: 500; display: none; }
+  .dl-link { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; background: var(--green); color: #000; font-weight: 600; font-size: 14px; padding: 10px 20px; border-radius: var(--radius-sm); text-decoration: none; display: none; }
+  .dl-link:hover { opacity: 0.88; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+    </div>
+    <div class="logo-text">YT<span>rimmer</span></div>
+  </div>
+
+  <div class="url-card">
+    <div class="url-row">
+      <input class="url-input" id="urlInput" type="text" placeholder="Paste a YouTube URL…" />
+      <button class="load-btn" id="loadBtn" onclick="loadVideo()">Load</button>
+    </div>
+    <div class="err-msg" id="errMsg"></div>
+  </div>
+
+  <div class="preview" id="preview">
+    <div class="thumb-wrap">
+      <img id="thumb" src="" alt="thumbnail" />
+      <div class="thumb-overlay"></div>
+      <div class="dur-pill" id="durPill">0:00</div>
+      <div class="thumb-meta">
+        <div class="thumb-title" id="thumbTitle"></div>
+        <div class="thumb-sub" id="thumbSub"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="trim-card" id="trimCard">
+    <div class="card-title">Trim</div>
+    <div class="timeline" id="timeline">
+      <div class="tl-bg"></div>
+      <div class="tl-selection" id="selection"></div>
+      <div class="tl-handle" id="handleL"><div class="tl-handle-bar"></div></div>
+      <div class="tl-handle" id="handleR"><div class="tl-handle-bar"></div></div>
+    </div>
+    <div class="time-row">
+      <div class="time-group">
+        <label>Start</label>
+        <input class="time-input" id="startIn" value="0:00" oninput="onTimeInput('start')" />
+      </div>
+      <div class="time-arrow">→</div>
+      <div class="time-group">
+        <label>End</label>
+        <input class="time-input" id="endIn" value="0:00" oninput="onTimeInput('end')" />
+      </div>
+    </div>
+    <div class="sel-dur" id="selDur">Selection: <strong>0s</strong></div>
+
+    <div class="quality-label">Quality</div>
+    <div class="quality-row">
+      <button class="q-btn" onclick="setQ(this,'2160')">4K</button>
+      <button class="q-btn active" onclick="setQ(this,'1080')">1080p</button>
+      <button class="q-btn" onclick="setQ(this,'720')">720p</button>
+      <button class="q-btn" onclick="setQ(this,'480')">480p</button>
+      <button class="q-btn" onclick="setQ(this,'best')">Best</button>
+    </div>
+
+    <button class="dl-btn" id="dlBtn" onclick="startDownload()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download clip
+    </button>
+  </div>
+
+  <div class="progress-card" id="progressCard">
+    <div class="progress-label" id="progressLabel">Downloading…</div>
+    <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="progress-pct" id="progressPct">0%</div>
+    <div class="progress-done" id="progressDone">✓ Done!</div>
+    <a class="dl-link" id="dlLink" href="#" target="_blank">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Save clip
+    </a>
+  </div>
+</div>
+
+<script>
+let totalSec = 0, startSec = 0, endSec = 0, quality = '1080', videoUrl = '', dragging = null, pollTimer = null;
+
+function fmt(s) {
+  s = Math.max(0, Math.round(s));
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+  if (h) return `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+  return `${m}:${String(sec).padStart(2,'0')}`;
+}
+
+function parseFmt(str) {
+  str = (str||'').trim();
+  const p = str.split(':').map(Number);
+  if (p.some(isNaN)) return null;
+  if (p.length === 3) return p[0]*3600 + p[1]*60 + p[2];
+  if (p.length === 2) return p[0]*60 + p[1];
+  return p[0];
+}
+
+function showErr(msg) {
+  const e = document.getElementById('errMsg');
+  e.textContent = msg; e.style.display = 'block';
+}
+
+async function loadVideo() {
+  const url = document.getElementById('urlInput').value.trim();
+  document.getElementById('errMsg').style.display = 'none';
+  if (!url) { showErr('Please paste a YouTube URL.'); return; }
+
+  const btn = document.getElementById('loadBtn');
+  btn.disabled = true; btn.textContent = 'Loading…';
+
+  try {
+    const res = await fetch('/api/info?url=' + encodeURIComponent(url));
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    videoUrl = url;
+    totalSec = data.duration || 0;
+    startSec = 0; endSec = totalSec;
+
+    document.getElementById('thumb').src = data.thumbnail;
+    document.getElementById('thumbTitle').textContent = data.title;
+    document.getElementById('thumbSub').textContent = data.uploader + (data.view_count ? ` · ${(data.view_count/1e6).toFixed(1)}M views` : '');
+    document.getElementById('durPill').textContent = fmt(totalSec);
+    document.getElementById('preview').style.display = 'block';
+    document.getElementById('trimCard').style.display = 'block';
+    document.getElementById('progressCard').style.display = 'none';
+
+    document.getElementById('startIn').value = '0:00';
+    document.getElementById('endIn').value = fmt(totalSec);
+    updateHandles(); updateSelDur();
+  } catch(e) {
+    showErr('Error: ' + e.message);
+  }
+  btn.disabled = false; btn.textContent = 'Load';
+}
+
+function updateHandles() {
+  if (!totalSec) return;
+  const lPct = (startSec / totalSec) * 100;
+  const rPct = (endSec / totalSec) * 100;
+  document.getElementById('handleL').style.left = lPct + '%';
+  document.getElementById('handleR').style.left = rPct + '%';
+  document.getElementById('selection').style.left = lPct + '%';
+  document.getElementById('selection').style.width = (rPct - lPct) + '%';
+  document.getElementById('startIn').value = fmt(startSec);
+  document.getElementById('endIn').value = fmt(endSec);
+}
+
+function updateSelDur() {
+  const d = Math.max(0, Math.round(endSec - startSec));
+  document.getElementById('selDur').innerHTML = `Selection: <strong>${fmt(d)}</strong>`;
+}
+
+const tl = () => document.getElementById('timeline');
+
+function pctFrom(e) {
+  const rect = tl().getBoundingClientRect();
+  const x = e.touches ? e.touches[0].clientX : e.clientX;
+  return Math.max(0, Math.min(1, (x - rect.left) / rect.width));
+}
+
+tl().addEventListener('mousedown', e => {
+  const sec = pctFrom(e) * totalSec;
+  dragging = Math.abs(sec - startSec) < Math.abs(sec - endSec) ? 'L' : 'R';
+  e.preventDefault();
+});
+
+document.addEventListener('mousemove', e => {
+  if (!dragging) return;
+  const sec = pctFrom(e) * totalSec;
+  if (dragging === 'L') startSec = Math.max(0, Math.min(sec, endSec - 1));
+  else endSec = Math.min(totalSec, Math.max(sec, startSec + 1));
+  updateHandles(); updateSelDur();
+});
+
+document.addEventListener('mouseup', () => { dragging = null; });
+
+tl().addEventListener('touchstart', e => {
+  const sec = pctFrom(e) * totalSec;
+  dragging = Math.abs(sec - startSec) < Math.abs(sec - endSec) ? 'L' : 'R';
+  e.preventDefault();
+}, {passive: false});
+
+document.addEventListener('touchmove', e => {
+  if (!dragging) return;
+  const sec = pctFrom(e) * totalSec;
+  if (dragging === 'L') startSec = Math.max(0, Math.min(sec, endSec - 1));
+  else endSec = Math.min(totalSec, Math.max(sec, startSec + 1));
+  updateHandles(); updateSelDur();
+}, {passive: true});
+
+document.addEventListener('touchend', () => { dragging = null; });
+
+function onTimeInput(which) {
+  const id = which === 'start' ? 'startIn' : 'endIn';
+  const s = parseFmt(document.getElementById(id).value);
+  if (s === null || s < 0) return;
+  if (which === 'start') startSec = Math.max(0, Math.min(s, endSec - 1));
+  else endSec = Math.min(totalSec, Math.max(s, startSec + 1));
+  updateHandles(); updateSelDur();
+}
+
+function setQ(btn, q) {
+  quality = q;
+  document.querySelectorAll('.q-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+async function startDownload() {
+  const dlBtn = document.getElementById('dlBtn');
+  dlBtn.disabled = true;
+
+  const pc = document.getElementById('progressCard');
+  pc.style.display = 'block';
+  document.getElementById('progressBar').style.width = '0%';
+  document.getElementById('progressPct').textContent = '0%';
+  document.getElementById('progressDone').style.display = 'none';
+  document.getElementById('dlLink').style.display = 'none';
+  document.getElementById('progressLabel').textContent = 'Downloading…';
+
+  try {
+    const res = await fetch('/api/download', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ url: videoUrl, start: startSec, end: endSec, quality })
+    });
+    const { job_id } = await res.json();
+    pollStatus(job_id);
+  } catch(e) {
+    document.getElementById('progressLabel').textContent = 'Error: ' + e.message;
+    dlBtn.disabled = false;
+  }
+}
+
+function pollStatus(job_id) {
+  if (pollTimer) clearInterval(pollTimer);
+  pollTimer = setInterval(async () => {
+    try {
+      const res = await fetch('/api/status/' + job_id);
+      const job = await res.json();
+      const pct = Math.round(job.progress || 0);
+      document.getElementById('progressBar').style.width = pct + '%';
+      document.getElementById('progressPct').textContent = pct + '%';
+
+      if (job.status === 'done') {
+        clearInterval(pollTimer);
+        document.getElementById('progressDone').style.display = 'block';
+        document.getElementById('progressLabel').textContent = 'Clip ready';
+        const link = document.getElementById('dlLink');
+        link.href = '/api/file/' + job_id;
+        link.style.display = 'inline-flex';
+        document.getElementById('dlBtn').disabled = false;
+      } else if (job.status === 'error') {
+        clearInterval(pollTimer);
+        document.getElementById('progressLabel').textContent = 'Error: ' + job.error;
+        document.getElementById('dlBtn').disabled = false;
+      }
+    } catch {}
+  }, 800);
+}
+
+document.getElementById('urlInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') loadVideo();
+});
+</script>
+</body>
+</html>

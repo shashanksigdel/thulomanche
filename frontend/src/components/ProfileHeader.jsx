@@ -1,23 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import '../styles/profile-header.css';
-import { statsService, settingsService } from '../services/api';
+import { settingsService } from '../services/api';
 
-export const ProfileHeader = ({ selectedCategory, onCategoryChange }) => {
+export const ProfileHeader = ({ onToolSelect }) => {
   const joinDate = 'Joined April 2026';
-  const [stats, setStats] = useState({ totalPosts: 0, totalViews: 0, totalCategories: 0, categories: [] });
-  const [settings, setSettings] = useState({ siteName: 'Thulomanche', siteTagline: 'A space for ideas, stories, and perspectives on life, technology, and creativity.' });
+  const [settings, setSettings] = useState({ siteName: 'Thulomanche', siteTagline: 'FREE TOOLS that make your day-to-day life easier.' });
+  const [stats, setStats] = useState({ totalPosts: 0, totalViews: 0, totalCategories: 0 });
 
   useEffect(() => {
-    const loadStats = async () => {
-      const data = await statsService.getStats();
-      if (data) setStats({
-        totalPosts: data.totalPosts || 0,
-        totalViews: data.totalViews || 0,
-        totalCategories: data.totalCategories || 0,
-        categories: Array.isArray(data.categories) ? data.categories : []
-      });
-    };
-    loadStats();
+    // Load default stats (no backend available)
+    setStats({ totalPosts: 0, totalViews: 0, totalCategories: 0 });
   }, []);
 
   useEffect(() => {
@@ -27,7 +19,7 @@ export const ProfileHeader = ({ selectedCategory, onCategoryChange }) => {
         if (data) {
           setSettings({
             siteName: data.siteName || 'Thulomanche',
-            siteTagline: data.siteTagline || 'A space for ideas, stories, and perspectives on life, technology, and creativity.'
+            siteTagline: data.siteTagline || 'Free tools that make your day-to-day life easier.'
           });
         }
       } catch (err) {
@@ -36,8 +28,6 @@ export const ProfileHeader = ({ selectedCategory, onCategoryChange }) => {
     };
     loadSettings();
   }, []);
-
-  const categories = ['All', ...stats.categories];
 
   return (
     <div className="profile-header">
@@ -70,41 +60,18 @@ export const ProfileHeader = ({ selectedCategory, onCategoryChange }) => {
                  <a href="https://www.x.com/thulomanche" target="_blank" rel="noopener noreferrer" title="X"><svg viewBox="0 0 24 24" aria-hidden="true"><g><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path></g></svg></a>
                  <a href="https://www.instagram.com/thulomanche" target="_blank" rel="noopener noreferrer" title="Instagram"><i className="fab fa-instagram"></i></a>
                  <a href="https://www.facebook.com/thulomanchey" target="_blank" rel="noopener noreferrer" title="Facebook"><i className="fab fa-facebook-f"></i></a>
-                 <a href="https://www.youtube.com/@thulomanche" target="_blank" rel="noopener noreferrer" title="YouTube"><i className="fab fa-youtube"></i></a>
                  <a href="http://buymemomo.com/thulomanche" target="_blank" rel="noopener noreferrer" title="Website"><i className="fas fa-globe"></i></a>
                </div>
             </div>
 
-            {/* Stats */}
-            <div className="profile-stats">
-                <div className="stat">
-                  <span className="stat-value">{stats.totalPosts}</span>
-                  <span className="stat-label">Posts</span>
-                </div>
-                <div className="stat">
-                  <span className="stat-value">{(stats.totalViews || 0).toLocaleString()}</span>
-                  <span className="stat-label">Views</span>
-                </div>
-                <div className="stat">
-                  <span className="stat-value">{stats.totalCategories}</span>
-                  <span className="stat-label">Categories</span>
-                </div>
-              <div className="stat-text">{joinDate}</div>
-            </div>
+            {/* Stats removed */}
           </div>
         </div>
 
-        {/* Category Tabs */}
+        {/* Tools Navigation */}
         <div className="category-tabs">
-          {categories.map((category) => (
-            <button
-              key={category}
-              className={`category-tab ${selectedCategory === category ? 'active' : ''}`}
-              onClick={() => onCategoryChange(category)}
-            >
-              {category}
-            </button>
-          ))}
+          <button onClick={() => onToolSelect(null)} className="category-tab">Home</button>
+          <button onClick={() => onToolSelect('unicode-to-preeti')} className="category-tab">Unicode to Preeti</button>
         </div>
       </div>
     </div>
