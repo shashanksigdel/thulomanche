@@ -1,33 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { useSearchParams } from 'react-router-dom';
 import '../styles/profile-header.css';
-import { settingsService } from '../services/api';
 
-export const ProfileHeader = ({ onToolSelect }) => {
-  const joinDate = 'Joined April 2026';
-  const [settings, setSettings] = useState({ siteName: 'Thulomanche', siteTagline: 'FREE TOOLS that make your day-to-day life easier.' });
-  const [stats, setStats] = useState({ totalPosts: 0, totalViews: 0, totalCategories: 0 });
-
-  useEffect(() => {
-    // Load default stats (no backend available)
-    setStats({ totalPosts: 0, totalViews: 0, totalCategories: 0 });
-  }, []);
-
-  useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        const data = await settingsService.getSettings();
-        if (data) {
-          setSettings({
-            siteName: data.siteName || 'Thulomanche',
-            siteTagline: data.siteTagline || 'Free tools that make your day-to-day life easier.'
-          });
-        }
-      } catch (err) {
-        console.error('Error loading settings:', err);
-      }
-    };
-    loadSettings();
-  }, []);
+export const ProfileHeader = ({ onToolSelect, activeTab }) => {
+  const [searchParams, setSearchParams] = useSearchParams();
 
   return (
     <div className="profile-header">
@@ -50,9 +26,9 @@ export const ProfileHeader = ({ onToolSelect }) => {
           <div className="profile-details">
             <div className="profile-header-top">
               <div>
-                <h1 className="profile-name">{settings.siteName}</h1>
+                <h1 className="profile-name">Thulomanche</h1>
                 <p className="profile-bio">
-                  {settings.siteTagline}
+                  Minimal blog + tools. No backend needed for this UI — tools run fully in the browser.
                 </p>
               </div>
                <div className="social-links">
@@ -70,8 +46,9 @@ export const ProfileHeader = ({ onToolSelect }) => {
 
         {/* Tools Navigation */}
         <div className="category-tabs">
-          <button onClick={() => onToolSelect(null)} className="category-tab">Home</button>
-          <button onClick={() => onToolSelect('unicode-to-preeti')} className="category-tab">Unicode to Preeti</button>
+          <button onClick={() => { setSearchParams({}); onToolSelect(null); }} className={`category-tab ${activeTab === null ? 'active' : ''}`}>Home</button>
+          <button onClick={() => { setSearchParams({ tab: 'unicode-to-preeti' }); onToolSelect('unicode-to-preeti'); }} className={`category-tab ${activeTab === 'unicode-to-preeti' ? 'active' : ''}`}>Unicode to Preeti</button>
+          <button onClick={() => { setSearchParams({ tab: 'media-downloader' }); onToolSelect('media-downloader'); }} className={`category-tab ${activeTab === 'media-downloader' ? 'active' : ''}`}>Media Downloader</button>
         </div>
       </div>
     </div>

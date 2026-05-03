@@ -213,7 +213,6 @@ export const UnicodeToPreetiConverter = () => {
     <div className="tool-page">
       <div className="tool-container">
         <h1>Unicode to Preeti Converter</h1>
-        <p className="tool-description">Improved to match shresthasushil.com.np</p>
 
         <div className="converter-wrapper">
           <div className="panel">
