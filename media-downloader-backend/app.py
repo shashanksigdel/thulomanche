@@ -50,7 +50,7 @@ def run_download(job_id, url, format_choice, format_id):
     job = jobs[job_id]
     out_template = os.path.join(DOWNLOAD_DIR, f"{job_id}.%(ext)s")
 
-    cmd = ["yt-dlp", "--no-playlist", "--no-check-certificate", "-o", out_template]
+    cmd = ["yt-dlp", "--no-playlist", "--no-check-certificate", "--no-cookies", "-o", out_template]
     cmd.extend(build_cookie_args())
 
     if format_choice == "audio":
@@ -136,7 +136,7 @@ def get_info():
     if not url:
         return jsonify({"error": "No URL provided"}), 400
 
-    cmd = ["yt-dlp", "--no-playlist", "--no-check-certificate", "-j", url]
+    cmd = ["yt-dlp", "--no-playlist", "--no-check-certificate", "--no-cookies", "-j", url]
     cmd.extend(build_cookie_args())
 
     try:
