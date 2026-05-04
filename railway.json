@@ -1,6 +1,5 @@
 {
   "build": {
-    "builder": "dockerfile",
-    "context": "media-downloader-backend"
+    "builder": "dockerfile"
   }
 }
