@@ -3,7 +3,6 @@ FROM python:3.12-slim
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     ffmpeg \
-    chromium \
     ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
@@ -15,5 +14,4 @@ COPY . .
 
 EXPOSE 8899
 ENV HOST=0.0.0.0
-ENV YTDLP_COOKIES_FROM_BROWSER=chromium
 CMD ["python", "app.py"]
