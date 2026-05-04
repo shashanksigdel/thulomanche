@@ -9,20 +9,6 @@ from flask_cors import CORS
 import re
 
 
-def build_cookie_args():
-    browser = (os.environ.get("YTDLP_COOKIES_FROM_BROWSER") or "").strip()
-    cookie_file = (os.environ.get("YTDLP_COOKIES_FILE") or "").strip()
-
-    if browser:
-        # Example: chrome,firefox,safari
-        return ["--cookies-from-browser", browser]
-
-    if cookie_file:
-        return ["--cookies", cookie_file]
-
-    return []
-
-
 def format_yt_dlp_error(stderr, stdout):
     stderr = (stderr or "").strip()
     stdout = (stdout or "").strip()
