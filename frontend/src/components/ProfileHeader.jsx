@@ -48,7 +48,6 @@ export const ProfileHeader = ({ onToolSelect, activeTab }) => {
         <div className="category-tabs">
           <button onClick={() => { setSearchParams({}); onToolSelect(null); }} className={`category-tab ${activeTab === null ? 'active' : ''}`}>Home</button>
           <button onClick={() => { setSearchParams({ tab: 'unicode-to-preeti' }); onToolSelect('unicode-to-preeti'); }} className={`category-tab ${activeTab === 'unicode-to-preeti' ? 'active' : ''}`}>Unicode to Preeti</button>
-          <button onClick={() => { setSearchParams({ tab: 'media-downloader' }); onToolSelect('media-downloader'); }} className={`category-tab ${activeTab === 'media-downloader' ? 'active' : ''}`}>Media Downloader</button>
         </div>
       </div>
     </div>
